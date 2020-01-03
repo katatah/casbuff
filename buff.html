@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Language" content="ja">
+<script src="utils.js?date=20191228" type="text/javascript"></script>
+<script src="buki.js?date=20191228" type="text/javascript"></script>
+<script src="siromusu.js?date=20191228" type="text/javascript"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="bufftable.js" type="text/javascript"></script>
+
+<style>
+#buffTable {
+	font-size:80%;
+}
+#buffTable th {
+cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<h3>編成のバフ重複確認ツール</h3>
+
+選択済み
+<table id="unitTable" border=1>
+	<thead>
+		<th>操作</th>
+		<th>名前</th>
+	</thead>
+	<tbody>
+	    <tr v-for="siromusu in unit">
+			<td><button v-on:click="del(siromusu)">削除</button></td>
+			<td>
+			{{ siromusu.name }}
+			</td>
+		</tr>
+	</tbody>
+</table>
+<br><br>
+追加対象
+	<div id="siromusu_filter">
+		<div class="siromusu_filter_weapon">
+		武器：
+		<label><input type="checkbox" v-model="checkedBuki" value="刀">刀</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="槍">槍</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="槌">槌</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="盾">盾</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="拳">拳</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="投剣">投剣</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="弓">弓</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="石弓">石弓</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="鉄砲">鉄砲</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="大砲">大砲</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="歌舞">歌舞</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="法術">法術</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="鈴">鈴</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="杖">杖</label> /
+		<label><input type="checkbox" v-model="checkedBuki" value="祓串">祓串</label><br/>
+		</div>
+
+		<div class="siromusu_filter_attr">
+		属性：
+		<label><input type="checkbox" v-model="checkedAttr" value="平">平</label> /
+		<label><input type="checkbox" v-model="checkedAttr" value="平山">平山</label> /
+		<label><input type="checkbox" v-model="checkedAttr" value="山">山</label> /
+		<label><input type="checkbox" v-model="checkedAttr" value="水">水</label> /
+		<label><input type="checkbox" v-model="checkedAttr" value="地獄">地獄</label><br/>
+
+		</div>
+
+		<div><span class="siromusu_filter_rare">
+		レア：
+		<label><input type="checkbox" v-model="checkedRare" value="1">1</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="2">2</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="3">3</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="4">4</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="5">5</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="6">6</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="7">7</label> /
+		<label><input type="checkbox" v-model="checkedRare" value="8">8</label>
+		</span>
+
+		　｜　<span class="siromusu_filter_islatest"><label title="改築来てない城娘を含む"><input type="checkbox" v-model="isLatest" value="1">改築</label></span><br>
+		<label><input type="checkbox" v-model="isRangeOnly" value="1">全体・範囲バフのみ</label> | <label><input type="checkbox" v-model="isTrick" value="1" checked>計略</label>
+		</div>
+
+	</div>
+
+<table id="buffTable" border=1>
+	<thead>
+		<th>操作</th>
+		<th v-on:click="sort('no')">名前</th>
+		<th v-on:click="sort('atk_p')">攻撃%</th>
+		<th v-on:click="sort('dmg_p')">与ダメ</th>
+		<th v-on:click="sort('d_dmg_p')">敵被ダメ</th>
+		<th v-on:click="sort('spd_p')">攻撃速度</th>
+		<th v-on:click="sort('wait_p')">隙</th>
+		<th v-on:click="sort('d_def_p')">敵防御</th>
+		<th v-on:click="sort('dis_p')">防御無視</th>
+		<th v-on:click="sort('range_p')">範囲</th>
+		<th>→</th>
+		<th v-on:click="sort('hp_p')">耐久%</th>
+		<th v-on:click="sort('def_p')">防御%</th>
+		<th v-on:click="sort('rec_p')">回復%</th>
+		<th v-on:click="sort('d_atk_p')">敵攻撃減</th>
+		<th v-on:click="sort('d_ydmg_p')">敵与ダメ減</th>
+		<th v-on:click="sort('hdmg_p')">被ダメ軽減</th>
+		<th v-on:click="sort('d_spd_p')">攻撃速度</th>
+		<th v-on:click="sort('d_wait_p')">攻撃後の隙</th>
+		<th v-on:click="sort('d_range_p')">攻撃範囲</th>
+	</thead>
+	<tbody>
+	    <tr v-for="siromusu in list" :key="siromusu.siromusu.no">
+			<td><button v-on:click="add(siromusu)">追加</button></td>
+			<td>
+			{{ siromusu.name }}
+			</td>
+			<td>
+				<span v-html="siromusu.s.atk_p"></span>
+			</td>
+			<td>
+			{{ siromusu.s.dmg_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_dmg_p }}
+			</td>
+			<td>
+				<span v-html="siromusu.s.spd_p"></span>
+			</td>
+			<td>
+			{{ siromusu.s.wait_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_def_p }}
+			</td>
+			<td>
+			{{ siromusu.s.dis_p }}
+			</td>
+			<td>
+			{{ siromusu.s.range_p }}
+			</td>
+			<td>|</td>
+			<td>
+				<span v-html="siromusu.s.hp_p"></span>
+			</td>
+			<td>
+				<span v-html="siromusu.s.def_p"></span>
+			</td>
+			<td>
+			{{ siromusu.s.rec_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_atk_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_ydmg_p }}
+			</td>
+			<td>
+			{{ siromusu.s.hdmg_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_spd_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_wait_p }}
+			</td>
+			<td>
+			{{ siromusu.s.d_range_p }}
+			</td>
+	    </tr>
+	</tbody>
+</table>
+
+
+
+
+
+
+</body>
+</html>
